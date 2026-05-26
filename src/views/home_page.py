@@ -18,11 +18,16 @@ def home_view(page: ft.Page, player: Player):
 
     async def toggle_theme(e):
         try:
+            prefs = ft.SharedPreferences()
             if page.theme_mode == ft.ThemeMode.LIGHT:
                 page.theme_mode = ft.ThemeMode.DARK
+                await prefs.set("theme", "dark")
             else:
                 page.theme_mode = ft.ThemeMode.LIGHT
+                await prefs.set("theme", "light")
 
+            bg_container.gradient.colors = get_gradient_colors()
+            page.update()
         except Exception as err:
             print(f"[Theme Toggle Error] {err}")
 

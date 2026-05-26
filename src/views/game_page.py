@@ -16,6 +16,15 @@ LOCATIONS = [
     (90, "https://images.unsplash.com/photo-1519681393784-d120267933ba"),
 ]
 
+CLASS_STYLES = {
+    "Подорожній": {"icon": ft.Icons.PERSON, "color": ft.Colors.WHITE70},
+    "Воїн": {"icon": ft.Icons.SHIELD_MOON_ROUNDED, "color": ft.Colors.AMBER_400},
+    "Маг": {"icon": ft.Icons.AUTO_AWESOME, "color": ft.Colors.BLUE_400},
+    "Злодій": {"icon": ft.Icons.NO_ENCRYPTION_ROUNDED, "color": ft.Colors.RED_400},
+    "Ельф": {"icon": ft.Icons.PARK, "color": ft.Colors.GREEN_400},
+}
+
+
 def get_background_for_steps(steps):
     current_img = LOCATIONS[0][1]
     for step_threshold, img_url in LOCATIONS:
@@ -25,6 +34,7 @@ def get_background_for_steps(steps):
 
 
 def game_view(page: ft.Page, player: Player):
+    selected_class = "Подорожній"
 
     async def go_to_home(e):
         player.reset()
@@ -39,10 +49,14 @@ def game_view(page: ft.Page, player: Player):
 
     async def toggle_theme(e):
         try:
+            prefs = ft.SharedPreferences()
             if page.theme_mode == ft.ThemeMode.LIGHT:
                 page.theme_mode = ft.ThemeMode.DARK
+                await prefs.set("theme", "dark")
             else:
                 page.theme_mode = ft.ThemeMode.LIGHT
+                await prefs.set("theme", "light")
+            page.update()
         except Exception as err:
             print(f"[Theme Toggle Error] {err}")
 
@@ -53,6 +67,7 @@ def game_view(page: ft.Page, player: Player):
         page.update()
 
     async def save_name(e):
+        nonlocal selected_class
         input_value = name_input.value.strip()
 
         if not re.match(r"^[a-zA-Zа-яА-ЯіІїЇєЄ0-9\s]{2,15}$", input_value):
@@ -65,13 +80,30 @@ def game_view(page: ft.Page, player: Player):
         player.name = input_value
         name_display.value = player.name
 
+        if selected_class in CLASS_STYLES:
+            avatar_container.content = ft.Icon(
+                CLASS_STYLES[selected_class]["icon"],
+                size=60,
+                color=CLASS_STYLES[selected_class]["color"]
+            )
 
         name_display.visible = True
         edit_button.visible = True
         edit_box.visible = False
         page.update()
 
+    def select_class_click(class_name):
+        nonlocal selected_class
+        selected_class = class_name
+        class_status_text.value = f"Клас: {class_name}"
 
+        if class_name in CLASS_STYLES:
+            avatar_container.content = ft.Icon(
+                CLASS_STYLES[class_name]["icon"],
+                size=60,
+                color=CLASS_STYLES[class_name]["color"]
+            )
+        page.update()
 
     avatar_container = ft.Container(
         content=ft.Icon(ft.Icons.PERSON, size=60, color=ft.Colors.WHITE70),
@@ -99,11 +131,25 @@ def game_view(page: ft.Page, player: Player):
         text_align=ft.TextAlign.CENTER
     )
 
+    class_status_text = ft.Text("Клас: Подорожній", size=13, color=ft.Colors.WHITE70, weight=ft.FontWeight.W_500)
 
-
+    class_selector_row = ft.Row([
+        ft.IconButton(ft.Icons.PERSON, tooltip="Подорожній", icon_color=ft.Colors.WHITE70,
+                      on_click=lambda _: select_class_click("Подорожній")),
+        ft.IconButton(ft.Icons.SHIELD_MOON_ROUNDED, tooltip="Воїн", icon_color=ft.Colors.AMBER_400,
+                      on_click=lambda _: select_class_click("Воїн")),
+        ft.IconButton(ft.Icons.AUTO_AWESOME, tooltip="Маг", icon_color=ft.Colors.BLUE_400,
+                      on_click=lambda _: select_class_click("Маг")),
+        ft.IconButton(ft.Icons.NO_ENCRYPTION_ROUNDED, tooltip="Злодій", icon_color=ft.Colors.RED_400,
+                      on_click=lambda _: select_class_click("Злодій")),
+        ft.IconButton(ft.Icons.PARK, tooltip="Ельф", icon_color=ft.Colors.GREEN_400,
+                      on_click=lambda _: select_class_click("Ельф")),
+    ], alignment=ft.MainAxisAlignment.CENTER, spacing=2)
 
     edit_box = ft.Column([
         name_input,
+        ft.Container(content=class_status_text, margin=ft.margin.only(top=5)),
+        class_selector_row,
         save_button
     ], horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=5, visible=False)
 
@@ -287,6 +333,7 @@ def game_view(page: ft.Page, player: Player):
                                 content=ft.Row([
                                     ft.Container(
                                         content=ft.Column([
+                                            # Контейнер, контент якого тепер повністю замінюється новими об'єктами іконок
                                             avatar_container,
 
                                             ft.Row([name_display, edit_button], alignment=ft.MainAxisAlignment.CENTER,
