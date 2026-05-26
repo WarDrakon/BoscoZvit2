@@ -348,15 +348,20 @@ events = [
         "attack": 1,
         "defense": 1,
         "type": "rare"
+    },
+    {
+        "title": "Знайдений гаманець",
+        "text": "На стежці ви побачили шкіряний гаманець",
+        "hp": 0, "attack": 0, "defense": 0, "gold": 15, "type": "common"
+    },
+    {
+        "title": "Подорожній торговець",
+        "text": "Він запропонував вам купити цілюще зілля",
+        "hp": 10, "attack": 0, "defense": 0, "gold": -10, "type": "common"
+    },
+    {
+        "title": "Стара шахта",
+        "text": "Ви спустилися в занедбану шахту і знайшли золоту жилу!",
+        "hp": -5, "attack": 0, "defense": 0, "gold": 30, "type": "common"
     }
-]
-
-LOCATIONS = [
-    (0, "https://images.unsplash.com/photo-1441974231531-c6227db76b6e"),
-    (10, "https://images.unsplash.com/photo-1448375240586-882707db888b"),
-    (20, "https://images.unsplash.com/photo-1425913397330-cf8af2ff40a1"),
-    (30, "https://images.unsplash.com/photo-1506744038136-46273834b3fb"),
-    (40, "https://images.unsplash.com/photo-1454496522488-7a8e488e8606"),
-    (50, "https://images.unsplash.com/photo-1509023464722-18d996393ca8"),
-    (60, "https://images.unsplash.com/photo-1519681393784-d120267933ba"),
 ]
