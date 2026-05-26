@@ -28,9 +28,60 @@ class Player:
     def add_step(self):
         self.steps += 1
 
+    def apply_event(self, event):
+        self.add_step()
+        self.hp = min(self.max_hp, max(0, self.hp + event.get("hp", 0)))
+        self.attack = max(0, self.attack + event.get("attack", 0))
+        self.defense = max(0, self.defense + event.get("defense", 0))
+        self.gold = max(0, self.gold + event.get("gold", 0))
 
+    def save_to_json(self):
+        if not self.history:
+            return
+
+        game_data = {
+            "player_name": self.name,
+            "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "final_stats": {
+                "steps": self.steps,
+                "gold": self.gold,
+                "attack": self.attack,
+                "defense": self.defense,
+                "max_hp": self.max_hp,
+                "inventory": self.inventory
+            },
+            "log": self.history
+        }
+
+        try:
+            log_dir = os.path.join("src", "storage") if os.path.exists("src") else "storage"
+
+            if not os.path.exists(log_dir):
+                os.makedirs(log_dir)
+
+            file_path = os.path.join(log_dir, f"history_{self.name}.json")
+
+            all_runs = []
+            if os.path.exists(file_path):
+                with open(file_path, "r", encoding="utf-8") as f:
+                    try:
+                        all_runs = json.load(f)
+                        if not isinstance(all_runs, list):
+                            all_runs = []
+                    except json.JSONDecodeError:
+                        all_runs = []
+
+            all_runs.append(game_data)
+
+            with open(file_path, "w", encoding="utf-8") as f:
+                json.dump(all_runs, f, ensure_ascii=False, indent=4)
+
+            print(f"[Успіх] Забіг збережено в JSON: {file_path}")
+        except Exception as e:
+            print(f"[Помилка збереження JSON] {e}")
 
     def reset(self):
+        self.save_to_json()
 
         self.max_hp = 100
         self.hp = self.max_hp

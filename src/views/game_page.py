@@ -190,6 +190,7 @@ def game_view(page: ft.Page, player: Player):
             hp_change = event.get("hp", 0)
             atk_change = event.get("attack", 0)
             def_change = event.get("defense", 0)
+            player.apply_event(event)
             res = []
             if hp_change != 0: res.append(f"{hp_change} HP")
             if atk_change != 0: res.append(f"{atk_change} ATK")
