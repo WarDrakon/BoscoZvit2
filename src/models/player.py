@@ -12,6 +12,9 @@ class Player:
         self.defense = 5
         self.steps = 0
         self.gold = 0
+        self.level = 1
+        self.current_class = "Подорожній"
+        self.unlocked_classes = ["Подорожній"]
         self.inventory = []
         self.history = []
         self.shop_limits = {
@@ -28,6 +31,36 @@ class Player:
     def add_step(self):
         self.steps += 1
 
+    def get_level_up_cost(self):
+        return self.level * 50
+
+    def buy_level(self):
+        cost = self.get_level_up_cost()
+        if self.gold >= cost:
+            self.gold -= cost
+            self.level += 1
+            self.max_hp += 15
+            self.hp = self.max_hp
+            self.attack += 3
+            self.defense += 2
+            self.history.append(f"Куплено рівень! Новий рівень: {self.level}. Залишок золота: {self.gold}")
+            return True, f"Рівень підвищено до {self.level}!"
+        return False, "Недостатньо золота для купівлі рівня!"
+
+    def buy_class(self, class_name, cost, req_lvl):
+        """Логіка купівлі гільдійського класу в магазині"""
+        if class_name in self.unlocked_classes:
+            return False, "Цей клас вже розблоковано!"
+        if self.level < req_lvl:
+            return False, f"Потрібен хоча б {req_lvl} рівень!"
+        if self.gold < cost:
+            return False, "Недостатньо золота!"
+
+        self.gold -= cost
+        self.unlocked_classes.append(class_name)
+        self.history.append(f"Розблоковано клас: {class_name}. Залишок золота: {self.gold}")
+        return True, f"Клас {class_name} успішно куплено!"
+
     def apply_event(self, event):
         self.add_step()
         self.hp = min(self.max_hp, max(0, self.hp + event.get("hp", 0)))
@@ -43,6 +76,8 @@ class Player:
             "player_name": self.name,
             "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "final_stats": {
+                "level": self.level,
+                "class": self.current_class,
                 "steps": self.steps,
                 "gold": self.gold,
                 "attack": self.attack,
@@ -89,6 +124,9 @@ class Player:
         self.defense = 5
         self.steps = 0
         self.gold = 0
+        self.level = 1
+        self.current_class = "Подорожній"
+        self.unlocked_classes = ["Подорожній"]
         self.inventory = []
         self.history = []
 

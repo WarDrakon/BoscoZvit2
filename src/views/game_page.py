@@ -34,7 +34,6 @@ def get_background_for_steps(steps):
 
 
 def game_view(page: ft.Page, player: Player):
-    selected_class = "Подорожній"
 
     async def go_to_home(e):
         player.reset()
@@ -64,10 +63,10 @@ def game_view(page: ft.Page, player: Player):
         name_display.visible = False
         edit_button.visible = False
         edit_box.visible = True
+        update_class_selector_colors()
         page.update()
 
     async def save_name(e):
-        nonlocal selected_class
         input_value = name_input.value.strip()
 
         if not re.match(r"^[a-zA-Zа-яА-ЯіІїЇєЄ0-9\s]{2,15}$", input_value):
@@ -80,12 +79,11 @@ def game_view(page: ft.Page, player: Player):
         player.name = input_value
         name_display.value = player.name
 
-        if selected_class in CLASS_STYLES:
-            avatar_container.content = ft.Icon(
-                CLASS_STYLES[selected_class]["icon"],
-                size=60,
-                color=CLASS_STYLES[selected_class]["color"]
-            )
+        avatar_container.content = ft.Icon(
+            CLASS_STYLES[player.current_class]["icon"],
+            size=60,
+            color=CLASS_STYLES[player.current_class]["color"]
+        )
 
         name_display.visible = True
         edit_button.visible = True
@@ -93,20 +91,32 @@ def game_view(page: ft.Page, player: Player):
         page.update()
 
     def select_class_click(class_name):
-        nonlocal selected_class
-        selected_class = class_name
+        if class_name not in player.unlocked_classes:
+            name_error_label.value = f"Клас {class_name} ще заблоковано в магазині!"
+            name_error_label.visible = True
+            page.update()
+            return
+
+        name_error_label.visible = False
+        player.current_class = class_name
         class_status_text.value = f"Клас: {class_name}"
 
-        if class_name in CLASS_STYLES:
-            avatar_container.content = ft.Icon(
-                CLASS_STYLES[class_name]["icon"],
-                size=60,
-                color=CLASS_STYLES[class_name]["color"]
-            )
+        avatar_container.content = ft.Icon(
+            CLASS_STYLES[class_name]["icon"],
+            size=60,
+            color=CLASS_STYLES[class_name]["color"]
+        )
         page.update()
 
+    def update_class_selector_colors():
+        btn_podorozhniy.icon_color = CLASS_STYLES["Подорожній"]["color"] if "Подорожній" in player.unlocked_classes else ft.Colors.GREY_600
+        btn_warrior.icon_color = CLASS_STYLES["Воїн"]["color"] if "Воїн" in player.unlocked_classes else ft.Colors.GREY_600
+        btn_mage.icon_color = CLASS_STYLES["Маг"]["color"] if "Маг" in player.unlocked_classes else ft.Colors.GREY_600
+        btn_thief.icon_color = CLASS_STYLES["Злодій"]["color"] if "Злодій" in player.unlocked_classes else ft.Colors.GREY_600
+        btn_elf.icon_color = CLASS_STYLES["Ельф"]["color"] if "Ельф" in player.unlocked_classes else ft.Colors.GREY_600
+
     avatar_container = ft.Container(
-        content=ft.Icon(ft.Icons.PERSON, size=60, color=ft.Colors.WHITE70),
+        content=ft.Icon(CLASS_STYLES[player.current_class]["icon"], size=60, color=CLASS_STYLES[player.current_class]["color"]),
         margin=ft.margin.only(bottom=5, top=5)
     )
 
@@ -118,32 +128,20 @@ def game_view(page: ft.Page, player: Player):
                                 on_click=save_name)
 
     name_input = ft.TextField(
-        value=player.name,
-        height=45,
-        width=180,
-        hint_text="Ім'я героя",
+        value=player.name, height=45, width=180, hint_text="Ім'я героя",
         hint_style=ft.TextStyle(color=ft.Colors.WHITE38),
-        bgcolor=ft.Colors.with_opacity(0.15, ft.Colors.WHITE),
-        color=ft.Colors.WHITE,
-        border_color=ft.Colors.WHITE24,
-        text_size=14,
-        content_padding=10,
-        text_align=ft.TextAlign.CENTER
+        bgcolor=ft.Colors.with_opacity(0.15, ft.Colors.WHITE), color=ft.Colors.WHITE,
+        border_color=ft.Colors.WHITE24, text_size=14, content_padding=10, text_align=ft.TextAlign.CENTER
     )
 
-    class_status_text = ft.Text("Клас: Подорожній", size=13, color=ft.Colors.WHITE70, weight=ft.FontWeight.W_500)
+    class_status_text = ft.Text(f"Клас: {player.current_class}", size=13, color=ft.Colors.WHITE70, weight=ft.FontWeight.W_500)
 
     class_selector_row = ft.Row([
-        ft.IconButton(ft.Icons.PERSON, tooltip="Подорожній", icon_color=ft.Colors.WHITE70,
-                      on_click=lambda _: select_class_click("Подорожній")),
-        ft.IconButton(ft.Icons.SHIELD_MOON_ROUNDED, tooltip="Воїн", icon_color=ft.Colors.AMBER_400,
-                      on_click=lambda _: select_class_click("Воїн")),
-        ft.IconButton(ft.Icons.AUTO_AWESOME, tooltip="Маг", icon_color=ft.Colors.BLUE_400,
-                      on_click=lambda _: select_class_click("Маг")),
-        ft.IconButton(ft.Icons.NO_ENCRYPTION_ROUNDED, tooltip="Злодій", icon_color=ft.Colors.RED_400,
-                      on_click=lambda _: select_class_click("Злодій")),
-        ft.IconButton(ft.Icons.PARK, tooltip="Ельф", icon_color=ft.Colors.GREEN_400,
-                      on_click=lambda _: select_class_click("Ельф")),
+        btn_podorozhniy := ft.IconButton(ft.Icons.PERSON, tooltip="Подорожній", on_click=lambda _: select_class_click("Подорожній")),
+        btn_warrior := ft.IconButton(ft.Icons.SHIELD_MOON_ROUNDED, tooltip="Воїн", on_click=lambda _: select_class_click("Воїн")),
+        btn_mage := ft.IconButton(ft.Icons.AUTO_AWESOME, tooltip="Маг", on_click=lambda _: select_class_click("Маг")),
+        btn_thief := ft.IconButton(ft.Icons.NO_ENCRYPTION_ROUNDED, tooltip="Злодій", on_click=lambda _: select_class_click("Злодій")),
+        btn_elf := ft.IconButton(ft.Icons.PARK, tooltip="Ельф", on_click=lambda _: select_class_click("Ельф")),
     ], alignment=ft.MainAxisAlignment.CENTER, spacing=2)
 
     edit_box = ft.Column([
@@ -168,6 +166,7 @@ def game_view(page: ft.Page, player: Player):
     )
 
     hp_display = ft.Text(f"{player.hp}/{player.max_hp}", size=16, color=ft.Colors.WHITE, weight=ft.FontWeight.BOLD)
+    level_text = ft.Text(f"Рівень: {player.level}", size=16, color=ft.Colors.CYAN_200, weight=ft.FontWeight.BOLD)
     atk_text = ft.Text(f"ATK: {player.attack}", size=18, color=ft.Colors.WHITE, weight=ft.FontWeight.BOLD)
     def_text = ft.Text(f"DEF: {player.defense}", size=18, color=ft.Colors.WHITE, weight=ft.FontWeight.BOLD)
     gold_text = ft.Text(f"Золото: {player.gold}", size=18, color=ft.Colors.WHITE, weight=ft.FontWeight.BOLD)
@@ -259,6 +258,7 @@ def game_view(page: ft.Page, player: Player):
 
         hp_display.value = f"{player.hp}/{player.max_hp}"
         hp_bar_container.padding = calculate_hp_padding(player.hp, player.max_hp)
+        level_text.value = f"Рівень: {player.level}"
         steps_display.value = f"Кроків: {player.steps}"
         atk_text.value = f"ATK: {player.attack}"
         def_text.value = f"DEF: {player.defense}"
@@ -333,7 +333,6 @@ def game_view(page: ft.Page, player: Player):
                                 content=ft.Row([
                                     ft.Container(
                                         content=ft.Column([
-                                            # Контейнер, контент якого тепер повністю замінюється новими об'єктами іконок
                                             avatar_container,
 
                                             ft.Row([name_display, edit_button], alignment=ft.MainAxisAlignment.CENTER,
@@ -348,6 +347,7 @@ def game_view(page: ft.Page, player: Player):
                                             hp_bar_container,
                                             hp_display,
                                             ft.Container(height=5),
+                                            level_text,
                                             atk_row, def_row, gold_row,
                                             ft.Divider(color=ft.Colors.WHITE24),
                                             steps_display,
