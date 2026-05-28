@@ -34,7 +34,6 @@ def get_background_for_steps(steps):
 
 
 def game_view(page: ft.Page, player: Player):
-
     async def go_to_home(e):
         player.reset()
         await page.push_route("/")
@@ -70,7 +69,7 @@ def game_view(page: ft.Page, player: Player):
         input_value = name_input.value.strip()
 
         if not re.match(r"^[a-zA-Zа-яА-ЯіІїЇєЄ0-9\s]{2,15}$", input_value):
-            name_error_label.value = "Ім'я повинне бути від 2 до 15 літер! і без символів"
+            name_error_label.value = "Ім'я повинне бути від 2 до 15 літер без символів!"
             name_error_label.visible = True
             page.update()
             return
@@ -92,7 +91,7 @@ def game_view(page: ft.Page, player: Player):
 
     def select_class_click(class_name):
         if class_name not in player.unlocked_classes:
-            name_error_label.value = f"Клас {class_name} ще заблоковано в магазині!"
+            name_error_label.value = f"Клас {class_name} заблоковано! Купіть його в магазині."
             name_error_label.visible = True
             page.update()
             return
@@ -109,14 +108,18 @@ def game_view(page: ft.Page, player: Player):
         page.update()
 
     def update_class_selector_colors():
-        btn_podorozhniy.icon_color = CLASS_STYLES["Подорожній"]["color"] if "Подорожній" in player.unlocked_classes else ft.Colors.GREY_600
-        btn_warrior.icon_color = CLASS_STYLES["Воїн"]["color"] if "Воїн" in player.unlocked_classes else ft.Colors.GREY_600
+        btn_podorozhniy.icon_color = CLASS_STYLES["Подорожній"][
+            "color"] if "Подорожній" in player.unlocked_classes else ft.Colors.GREY_600
+        btn_warrior.icon_color = CLASS_STYLES["Воїн"][
+            "color"] if "Воїн" in player.unlocked_classes else ft.Colors.GREY_600
         btn_mage.icon_color = CLASS_STYLES["Маг"]["color"] if "Маг" in player.unlocked_classes else ft.Colors.GREY_600
-        btn_thief.icon_color = CLASS_STYLES["Злодій"]["color"] if "Злодій" in player.unlocked_classes else ft.Colors.GREY_600
+        btn_thief.icon_color = CLASS_STYLES["Злодій"][
+            "color"] if "Злодій" in player.unlocked_classes else ft.Colors.GREY_600
         btn_elf.icon_color = CLASS_STYLES["Ельф"]["color"] if "Ельф" in player.unlocked_classes else ft.Colors.GREY_600
 
     avatar_container = ft.Container(
-        content=ft.Icon(CLASS_STYLES[player.current_class]["icon"], size=60, color=CLASS_STYLES[player.current_class]["color"]),
+        content=ft.Icon(CLASS_STYLES[player.current_class]["icon"], size=60,
+                        color=CLASS_STYLES[player.current_class]["color"]),
         margin=ft.margin.only(bottom=5, top=5)
     )
 
@@ -134,13 +137,17 @@ def game_view(page: ft.Page, player: Player):
         border_color=ft.Colors.WHITE24, text_size=14, content_padding=10, text_align=ft.TextAlign.CENTER
     )
 
-    class_status_text = ft.Text(f"Клас: {player.current_class}", size=13, color=ft.Colors.WHITE70, weight=ft.FontWeight.W_500)
+    class_status_text = ft.Text(f"Клас: {player.current_class}", size=13, color=ft.Colors.WHITE70,
+                                weight=ft.FontWeight.W_500)
 
     class_selector_row = ft.Row([
-        btn_podorozhniy := ft.IconButton(ft.Icons.PERSON, tooltip="Подорожній", on_click=lambda _: select_class_click("Подорожній")),
-        btn_warrior := ft.IconButton(ft.Icons.SHIELD_MOON_ROUNDED, tooltip="Воїн", on_click=lambda _: select_class_click("Воїн")),
+        btn_podorozhniy := ft.IconButton(ft.Icons.PERSON, tooltip="Подорожній",
+                                         on_click=lambda _: select_class_click("Подорожній")),
+        btn_warrior := ft.IconButton(ft.Icons.SHIELD_MOON_ROUNDED, tooltip="Воїн",
+                                     on_click=lambda _: select_class_click("Воїн")),
         btn_mage := ft.IconButton(ft.Icons.AUTO_AWESOME, tooltip="Маг", on_click=lambda _: select_class_click("Маг")),
-        btn_thief := ft.IconButton(ft.Icons.NO_ENCRYPTION_ROUNDED, tooltip="Злодій", on_click=lambda _: select_class_click("Злодій")),
+        btn_thief := ft.IconButton(ft.Icons.NO_ENCRYPTION_ROUNDED, tooltip="Злодій",
+                                   on_click=lambda _: select_class_click("Злодій")),
         btn_elf := ft.IconButton(ft.Icons.PARK, tooltip="Ельф", on_click=lambda _: select_class_click("Ельф")),
     ], alignment=ft.MainAxisAlignment.CENTER, spacing=2)
 
@@ -229,21 +236,32 @@ def game_view(page: ft.Page, player: Player):
 
             loot_text = f" Отримано трофеї: +{loot_gold} 💰." if loot_gold > 0 else ""
             player.history.append(f"Крок {player.steps}: Бій з ворогом. Втрачено {hp_lost} HP.{loot_text}")
-
             event_description.value = f"{event.get('text')}\nВорог: HP:{e_hp}, ATK:{e_atk}, DEF:{e_def}"
         else:
             hp_change = event.get("hp", 0)
             atk_change = event.get("attack", 0)
             def_change = event.get("defense", 0)
-            player.apply_event(event)
+
+            is_negative = hp_change < 0 or atk_change < 0 or def_change < 0 or gold_change < 0
+            if is_negative and player.current_class == "Ельф" and random.random() < 0.15:
+                player.add_step()
+                player.history.append(
+                    f"Крок {player.steps}: Спрацював рефлекс Ельфа! Шкоду від '{event.get('title')}' анульовано.")
+                event_description.value = f"Завдяки спритності Ельфа ви ухилилися від небезпеки!\n\n{event.get('text', '...')}"
+                hp_change = atk_change = def_change = gold_change = 0
+            else:
+                player.apply_event(event)
+                event_description.value = event.get("text", "...")
+
             res = []
             if hp_change != 0: res.append(f"{hp_change} HP")
             if atk_change != 0: res.append(f"{atk_change} ATK")
             if def_change != 0: res.append(f"{def_change} DEF")
             if gold_change != 0: res.append(f"{gold_change} Золота")
             res_text = ", ".join(res) if res else "Без втрат"
-            player.history.append(f"Крок {player.steps}: {event.get('title')} ({res_text})")
-            event_description.value = event.get("text", "...")
+
+            if not (is_negative and player.current_class == "Ельф" and hp_change == 0):
+                player.history.append(f"Крок {player.steps}: {event.get('title')} ({res_text})")
 
         impacts = []
         if hp_change != 0: impacts.append(f"{'+' if hp_change > 0 else ''}{hp_change} HP")
@@ -264,6 +282,7 @@ def game_view(page: ft.Page, player: Player):
         def_text.value = f"DEF: {player.defense}"
         gold_text.value = f"Золото: {player.gold}"
         current_bg_image.src = get_background_for_steps(player.steps)
+
         if not player.is_alive():
             player.history.append(f"--- ГЕРОЙ ЗАГИНУВ НА КРОЦІ {player.steps} ---")
             death_message.value = f"Герой загинув після {player.steps} кроків"
@@ -334,12 +353,9 @@ def game_view(page: ft.Page, player: Player):
                                     ft.Container(
                                         content=ft.Column([
                                             avatar_container,
-
                                             ft.Row([name_display, edit_button], alignment=ft.MainAxisAlignment.CENTER,
                                                    spacing=5),
-
                                             edit_box,
-
                                             name_error_label,
                                             ft.Divider(color=ft.Colors.WHITE24),
                                             ft.Text("ЗДОРОВ'Я", size=12, weight=ft.FontWeight.BOLD,
